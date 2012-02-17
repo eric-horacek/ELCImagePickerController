@@ -199,5 +199,10 @@ static int compareGroupsUsingSelector(id p1, id p2, void *context)
     [super dealloc];
 }
 
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+	return YES;
+}
+
 @end
 

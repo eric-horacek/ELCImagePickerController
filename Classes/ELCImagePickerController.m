@@ -59,23 +59,9 @@
 	}
 }
 
-#pragma mark -
-#pragma mark Memory management
-
-- (void)didReceiveMemoryWarning {    
-    NSLog(@"ELC Image Picker received memory warning!!!");
-    
-    [super didReceiveMemoryWarning];
-}
-
-- (void)viewDidUnload {
-    [super viewDidUnload];
-}
-
-
-- (void)dealloc {
-    NSLog(@"deallocing ELCImagePickerController");
-    [super dealloc];
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+	return YES;
 }
 
 @end

@@ -22,20 +22,23 @@
 
 -(id)initWithAsset:(ALAsset*)_asset {
 	
-	if (self = [super initWithFrame:CGRectMake(0, 0, 0, 0)]) {
+	if (self = [super initWithFrame:CGRectMake(0, 0, 10, 10)]) {
 		
 		self.asset = _asset;
 		
-		CGRect viewFrames = CGRectMake(0, 0, 75, 75);
+		CGRect viewFrames = self.bounds;
 		
 		UIImageView *assetImageView = [[UIImageView alloc] initWithFrame:viewFrames];
-		[assetImageView setContentMode:UIViewContentModeScaleToFill];
+		[assetImageView setContentMode:UIViewContentModeScaleAspectFill];
 		[assetImageView setImage:[UIImage imageWithCGImage:[self.asset thumbnail]]];
+		[assetImageView setAutoresizingMask:UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight];
+		[assetImageView setClipsToBounds:YES];
 		[self addSubview:assetImageView];
 		[assetImageView release];
 		
 		overlayView = [[UIImageView alloc] initWithFrame:viewFrames];
-		[overlayView setImage:[UIImage imageNamed:@"Overlay.png"]];
+		[overlayView setAutoresizingMask:UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight];
+		[overlayView setImage:[[UIImage imageNamed:@"Overlay.png"] stretchableImageWithLeftCapWidth:1 topCapHeight:1]];
 		[overlayView setHidden:YES];
 		[self addSubview:overlayView];
     }

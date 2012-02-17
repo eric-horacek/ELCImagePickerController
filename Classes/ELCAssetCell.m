@@ -36,7 +36,7 @@
     
     CGRect frame;
     CGFloat padding = [ELCAssetCell cellPadding];
-    frame = CGRectMake(padding, padding/2, 75, 75);
+    frame = CGRectMake(padding, padding/2, self.bounds.size.width / 4 - 5, self.bounds.size.height - padding);
 	
 	for(ELCAsset *elcAsset in self.rowAssets) {
 		

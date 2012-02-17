@@ -16,8 +16,8 @@
 @synthesize scrollview;
 
 -(IBAction)launchController {
-	
-    ELCAlbumPickerController *albumController = [[ELCAlbumPickerController alloc] initWithNibName:@"ELCAlbumPickerController" bundle:[NSBundle mainBundle]];    
+		
+    ELCAlbumPickerController *albumController = [[ELCAlbumPickerController alloc] init];
 	ELCImagePickerController *elcPicker = [[ELCImagePickerController alloc] initWithRootViewController:albumController];
     [albumController setParent:elcPicker];
 	[elcPicker setDelegate:self];
@@ -68,6 +68,11 @@
 - (void)viewDidUnload {
 	// Release any retained subviews of the main view.
 	// e.g. self.myOutlet = nil;
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+	return YES;
 }
 
 
