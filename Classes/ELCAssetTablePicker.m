@@ -44,11 +44,10 @@
     
     self.navigationController.navigationBar.barStyle = UIBarStyleBlackTranslucent;
 
-    if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad) {
+    if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad)
         self.wantsFullScreenLayout = YES;
-    } else {
-        [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
-    }
+	
+	[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
     
     [self.tableView reloadData];
     
@@ -237,7 +236,7 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
     // Add two rows for padding at the top and bottom of each section
-    return ceil([self.assetGroup numberOfAssets] / [self assetsPerRow]) + 2;
+	return ceil((float) [self.assetGroup numberOfAssets] / (float) [self assetsPerRow]) + 2;
 }
 
 // ugly

@@ -35,11 +35,10 @@ static int compareGroupsUsingSelector(id p1, id p2, void *context)
     
     self.navigationController.navigationBar.barStyle = UIBarStyleBlackTranslucent;
     
-    if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad) {
+    if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad)
         self.wantsFullScreenLayout = YES;
-    }  else {
-        [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
-    }
+	
+	[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
     
     UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self.parent action:@selector(cancelImagePicker)];
 	self.navigationItem.leftBarButtonItem = cancelButton;
