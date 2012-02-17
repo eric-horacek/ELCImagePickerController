@@ -6,11 +6,11 @@
 //
 
 #import "ELCAssetCell.h"
-#import "ELCAsset.h"
 
 @implementation ELCAssetCell
 
 @synthesize rowAssets;
+@synthesize didSelectAssetBlock;
 
 -(id)initWithAssets:(NSArray*)_assets reuseIdentifier:(NSString*)_identifier {
     
@@ -42,6 +42,7 @@
 		
 		[elcAsset setFrame:frame];
 		[elcAsset addGestureRecognizer:[[[UITapGestureRecognizer alloc] initWithTarget:elcAsset action:@selector(toggleSelection)] autorelease]];
+		[elcAsset setDidSelectAssetBlock:didSelectAssetBlock];
 		[self addSubview:elcAsset];
 		
 		frame.origin.x = frame.origin.x + frame.size.width + padding;
@@ -60,6 +61,7 @@
 -(void)dealloc 
 {
 	[rowAssets release];
+	[didSelectAssetBlock release];
     
 	[super dealloc];
 }

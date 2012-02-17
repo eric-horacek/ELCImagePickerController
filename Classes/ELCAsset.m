@@ -12,6 +12,7 @@
 
 @synthesize asset;
 @synthesize delegate;
+@synthesize didSelectAssetBlock;
 
 - (id)initWithFrame:(CGRect)frame {
     if ((self = [super initWithFrame:frame])) {
@@ -49,6 +50,9 @@
 -(void)toggleSelection {
     
 	overlayView.hidden = !overlayView.hidden;
+	
+	if (didSelectAssetBlock != NULL)
+		didSelectAssetBlock(asset);
     
     if ([self.delegate respondsToSelector:@selector(assetSelected:)]) {
         [self.delegate assetSelected:self];
@@ -70,6 +74,7 @@
     self.asset = nil;
     self.delegate = nil;
 	[overlayView release];
+	[didSelectAssetBlock release];
     [super dealloc];
 }
 

@@ -19,12 +19,15 @@
 	id parent;
 	
 	NSOperationQueue *queue;
+	
+	ELCAssetDidSelectAssetBlock didSelectAssetBlock;
 }
 
 @property (nonatomic, assign) id parent;
 @property (nonatomic, assign) ALAssetsGroup *assetGroup;
 @property (nonatomic, retain) NSMutableArray *elcAssets;
 @property (nonatomic, retain) IBOutlet UILabel *selectedAssetsLabel;
+@property (nonatomic, copy) ELCAssetDidSelectAssetBlock didSelectAssetBlock;
 
 -(int)totalSelectedAssets;
 -(void)preparePhotos;

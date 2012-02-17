@@ -25,6 +25,7 @@
 @synthesize parent;
 @synthesize selectedAssetsLabel;
 @synthesize assetGroup, elcAssets;
+@synthesize didSelectAssetBlock;
 
 -(void)viewDidLoad {
         
@@ -113,13 +114,12 @@
     
     int totalSelectedAssets = [self totalSelectedAssets];
     
-    if (totalSelectedAssets == 0) {
-        self.navigationItem.title = @"Select Photos";
-    } else if (totalSelectedAssets == 1) {
-        self.navigationItem.title = @"1 Photo";
-    } else {
-        self.navigationItem.title = [NSString stringWithFormat:@"%i Photos", totalSelectedAssets];
-    }
+    if (totalSelectedAssets == 0)
+        self.title = @"Select Photos";
+    else if (totalSelectedAssets == 1)
+        self.title = @"1 Photo";
+    else
+        self.title = [NSString stringWithFormat:@"%i Photos", totalSelectedAssets];
     
     if (totalSelectedAssets > 20) {
          
@@ -311,6 +311,8 @@
         {		
             [cell setAssets:[self assetsForIndexPath:updatedIndexPath]];
         }
+		
+		[cell setDidSelectAssetBlock:didSelectAssetBlock];
         
         return cell;
     }
@@ -359,7 +361,8 @@
 {
     [elcAssets release];
     [selectedAssetsLabel release];
-    [super dealloc];    
+	[didSelectAssetBlock release];
+    [super dealloc];
 }
 
 @end

@@ -8,6 +8,8 @@
 
 #import <UIKit/UIKit.h>
 
+#import "ELCAsset.h"
+
 @interface ELCImagePickerController : UINavigationController {
 
 	id delegate;

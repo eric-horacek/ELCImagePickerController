@@ -144,6 +144,8 @@
 			isa = PBXGroup;
 			children = (
 				8FBE5D93131DC988001603C7 /* Resources */,
+				8FBE5D90131DC988001603C7 /* ELCImagePickerController.h */,
+				8FBE5D91131DC988001603C7 /* ELCImagePickerController.m */,
 				8FBE5D88131DC988001603C7 /* ELCAlbumPickerController.h */,
 				8FBE5D89131DC988001603C7 /* ELCAlbumPickerController.m */,
 				8FBE5D8A131DC988001603C7 /* ELCAssetTablePicker.h */,
@@ -152,8 +154,6 @@
 				8FBE5D8D131DC988001603C7 /* ELCAsset.m */,
 				8FBE5D8E131DC988001603C7 /* ELCAssetCell.h */,
 				8FBE5D8F131DC988001603C7 /* ELCAssetCell.m */,
-				8FBE5D90131DC988001603C7 /* ELCImagePickerController.h */,
-				8FBE5D91131DC988001603C7 /* ELCImagePickerController.m */,
 			);
 			name = "ELC Image Picker";
 			sourceTree = "<group>";
@@ -302,7 +302,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PREBINDING = NO;
-				SDKROOT = iphoneos4.1;
+				SDKROOT = iphoneos;
 			};
 			name = Release;
 		};

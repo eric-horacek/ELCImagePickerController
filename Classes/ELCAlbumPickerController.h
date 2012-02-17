@@ -7,6 +7,8 @@
 
 #import <UIKit/UIKit.h>
 
+#import "ELCAsset.h"
+
 @class ELCAssetTablePicker;
 
 
@@ -16,13 +18,15 @@
 	NSOperationQueue *queue;
     
     ELCAssetTablePicker *assetTablePicker;
+	
+	ELCAssetDidSelectAssetBlock didSelectAssetBlock;
     
 	id parent;
 }
 
 @property (nonatomic, assign) id parent;
 @property (nonatomic, retain) NSMutableArray *assetGroups;
-
+@property (nonatomic, copy) ELCAssetDidSelectAssetBlock didSelectAssetBlock;
 @property (nonatomic, retain) ELCAssetTablePicker *assetTablePicker;
 
 -(void)selectedAssets:(NSArray*)_assets;
