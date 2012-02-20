@@ -40,7 +40,7 @@ static int compareGroupsUsingSelector(id p1, id p2, void *context)
 {
     [super viewDidLoad];
 	
-	[self setTitle:@"Albums"];
+	[self setTitle:NSLocalizedString(@"AlbumsKey", NULL)];
     
     self.navigationController.navigationBar.barStyle = UIBarStyleBlackTranslucent;
 	[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
@@ -75,29 +75,27 @@ static int compareGroupsUsingSelector(id p1, id p2, void *context)
                              // If we encounter a location services error, prompt the user to enable location services
                              if ([error code] == ALAssetsLibraryAccessUserDeniedError)
 							 {
-                                 errorMessage = [NSString stringWithFormat:@"It looks like you've disabled location services for this app. To add photos, enable \"Location Services\" for %@ in your device's \"Settings\" App.",[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"]];
-                                 errorTitle = [NSString stringWithString:@"Oops!"];
+                                 errorMessage = [NSString localizedStringWithFormat:NSLocalizedString(@"UserDeniedKey", NULL),[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"]];
+                                 errorTitle = [NSString stringWithString:NSLocalizedString(@"TitleKey", NULL)];
                              }
 							 else if ([error code] == ALAssetsLibraryAccessGloballyDeniedError)
 							 {
-                                 errorMessage = [NSString stringWithString:@"It looks like you've disabled location services on your device. To add photos, enable \"Location Services\" in your device's \"Settings\" App."]; 
-                                 errorTitle = [NSString stringWithString:@"Oops!"];
+                                 errorMessage = [NSString stringWithString:NSLocalizedString(@"GloballyDeniedKey", NULL)]; 
+                                 errorTitle = [NSString stringWithString:NSLocalizedString(@"TitleKey", NULL)];
                              }
 							 else
 							 {
-                                 errorMessage = [NSString stringWithFormat:@"Album Error: %@", [error localizedDescription]];
-                                 errorTitle = [NSString stringWithString:@"Error"];
+                                 errorMessage = [NSString localizedStringWithFormat:NSLocalizedString(@"AlbumErrorKey", NULL), [error localizedDescription]];
+                                 errorTitle = [NSString stringWithString:NSLocalizedString(@"ErrorKey", NULL)];
                              }
                              
                              UIAlertView * alert = [[UIAlertView alloc] initWithTitle:errorTitle
                                                                               message:errorMessage
                                                                              delegate:nil 
-                                                                    cancelButtonTitle:@"Ok" 
+                                                                    cancelButtonTitle:NSLocalizedString(@"OkKey", NULL) 
                                                                     otherButtonTitles:nil];
                              [alert show];
-                             [alert release];
-                             
-                             NSLog(@"A problem occured %@", [error description]);                                   
+                             [alert release];                                   
                          }];
 }
 
@@ -182,7 +180,7 @@ static int compareGroupsUsingSelector(id p1, id p2, void *context)
     NSInteger gCount = [g numberOfAssets];
     
     cell.textLabel.text = [NSString stringWithFormat:@"%@",[g valueForProperty:ALAssetsGroupPropertyName]];
-    cell.detailTextLabel.text = [NSString stringWithFormat:@"(%d)",gCount];
+    cell.detailTextLabel.text = [NSString localizedStringWithFormat:NSLocalizedString(@"PhotosCountKey", NULL), gCount];
     cell.detailTextLabel.textColor = [UIColor grayColor];
     [cell.imageView setImage:[UIImage imageWithCGImage:[(ALAssetsGroup *)[_assetGroups objectAtIndex:indexPath.row] posterImage]]];
 	[cell setAccessoryType:UITableViewCellAccessoryDisclosureIndicator];

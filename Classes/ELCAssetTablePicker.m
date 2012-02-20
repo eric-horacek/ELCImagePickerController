@@ -46,7 +46,7 @@
 		[doneButtonItem release];
 	}
     
-	[self setTitle:@"Loading..."];
+	[self setTitle:NSLocalizedString(@"LoadingKey", NULL)];
     
     self.navigationController.navigationBar.barStyle = UIBarStyleBlackTranslucent;
 	[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
@@ -80,7 +80,7 @@
 		}];
 		
 		dispatch_async(dispatch_get_main_queue(), ^{
-			ss.title = @"Select Photos";
+			ss.title = NSLocalizedString(@"SelectPhotosKey", NULL);
 			[self scrollTableViewToBottom];
 		});
 		
@@ -94,11 +94,11 @@
 		int totalSelectedAssets = [ss totalSelectedAssets];
 		
 		if (totalSelectedAssets == 0)
-			ss.title = @"Select Photos";
+			ss.title = NSLocalizedString(@"SelectPhotosKey", NULL);
 		else if (totalSelectedAssets == 1)
-			ss.title = @"1 Photo";
+			ss.title = NSLocalizedString(@"Photo1", NULL);
 		else
-			ss.title = [NSString stringWithFormat:@"%i Photos", totalSelectedAssets];
+			ss.title = [NSString localizedStringWithFormat:NSLocalizedString(@"PhotosCountKey", NULL), totalSelectedAssets];
 		
 		if (totalSelectedAssets > 20) 
 		{	
@@ -254,7 +254,7 @@
             cell.textLabel.font = [UIFont systemFontOfSize:19];
         }
         
-        cell.textLabel.text = [NSString stringWithFormat:@"%i Photos", self.assetsGroup.numberOfAssets];
+        cell.textLabel.text = [NSString localizedStringWithFormat:NSLocalizedString(@"PhotosCountKey", NULL), self.assetsGroup.numberOfAssets];
         
         return cell;
     }
