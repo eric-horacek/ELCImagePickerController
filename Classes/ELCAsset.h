@@ -8,31 +8,16 @@
 #import <UIKit/UIKit.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 
-@protocol ELCAssetProtocol;
+@class ELCAsset;
 @class ALAsset;
 
 typedef void (^ELCAssetDidSelectAssetBlock)(ALAsset *asset);
 
-@interface ELCAsset : UIView {
-	ALAsset *asset;
-	UIImageView *overlayView;
-	BOOL selected;
-	id parent;
-	ELCAssetDidSelectAssetBlock didSelectAssetBlock;
-}
+@interface ELCAsset : UIView 
 
+@property (nonatomic, assign, getter = isSelected) BOOL selected;
 @property (nonatomic, retain) ALAsset *asset;
-@property (nonatomic, assign) id<ELCAssetProtocol> delegate;
 @property (nonatomic, copy) ELCAssetDidSelectAssetBlock didSelectAssetBlock;
-
--(id)initWithAsset:(ALAsset*)_asset;
--(BOOL)selected;
-
-@end
-
-@protocol ELCAssetProtocol <NSObject>
-
-@optional
-- (void)assetSelected:(ELCAsset*)asset;
+@property (nonatomic, readonly) UIImageView *imageView;
 
 @end

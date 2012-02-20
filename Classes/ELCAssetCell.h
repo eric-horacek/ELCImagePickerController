@@ -9,17 +9,10 @@
 #import "ELCAsset.h"
 
 @interface ELCAssetCell : UITableViewCell
-{
-	NSArray *rowAssets;
-	ELCAssetDidSelectAssetBlock didSelectAssetBlock;
-}
 
--(id)initWithAssets:(NSArray*)_assets reuseIdentifier:(NSString*)_identifier;
--(void)setAssets:(NSArray*)_assets;
+@property (nonatomic, copy) ELCAssetDidSelectAssetBlock didSelectAssetBlock;
+@property (nonatomic, retain) NSArray *assets;
 
 + (CGFloat)cellPadding;
-
-@property (nonatomic,retain) NSArray *rowAssets;
-@property (nonatomic, copy) ELCAssetDidSelectAssetBlock didSelectAssetBlock;
 
 @end

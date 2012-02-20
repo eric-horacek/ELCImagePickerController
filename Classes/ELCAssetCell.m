@@ -7,61 +7,49 @@
 
 #import "ELCAssetCell.h"
 
+@interface ELCAssetCell ()
+
+@end
+
 @implementation ELCAssetCell
 
-@synthesize rowAssets;
-@synthesize didSelectAssetBlock;
+@synthesize assets = _assets;
+@synthesize didSelectAssetBlock = _didSelectAssetBlock;
 
--(id)initWithAssets:(NSArray*)_assets reuseIdentifier:(NSString*)_identifier {
-    
-	if(self = [super initWithStyle:UITableViewCellStyleDefault reuseIdentifier:_identifier]) {
-        
-		self.rowAssets = _assets;
-	}
+- (void)setAssets:(NSArray *)assets
+{		
+	[self.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
 	
-	return self;
+	[_assets release];
+	_assets = [assets retain];
 }
 
--(void)setAssets:(NSArray*)_assets {
+- (void)layoutSubviews
+{
+	CGFloat padding = [ELCAssetCell cellPadding];
+    CGRect frame = CGRectMake(padding, padding / 2, self.bounds.size.width / 4 - 5, self.bounds.size.height - padding);
 	
-	for(UIView *view in [self subviews]) 
-    {		
-		[view removeFromSuperview];
-	}
-	
-	self.rowAssets = _assets;
-}
-
--(void)layoutSubviews {
-    
-    CGRect frame;
-    CGFloat padding = [ELCAssetCell cellPadding];
-    frame = CGRectMake(padding, padding/2, self.bounds.size.width / 4 - 5, self.bounds.size.height - padding);
-	
-	for(ELCAsset *elcAsset in self.rowAssets) {
-		
+	for(ELCAsset *elcAsset in _assets) 
+	{
 		[elcAsset setFrame:frame];
-		[elcAsset addGestureRecognizer:[[[UITapGestureRecognizer alloc] initWithTarget:elcAsset action:@selector(toggleSelection)] autorelease]];
-		[elcAsset setDidSelectAssetBlock:didSelectAssetBlock];
+		[elcAsset setDidSelectAssetBlock:_didSelectAssetBlock];
 		[self addSubview:elcAsset];
 		
 		frame.origin.x = frame.origin.x + frame.size.width + padding;
 	}
+	
+	[super layoutSubviews];
 }
 
 + (CGFloat)cellPadding
 {
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-        return 13.0;
-    } else {
-        return 4.0;
-    }
+    return (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) ? 13.0 : 4.0;
 }
 
--(void)dealloc 
+- (void)dealloc 
 {
-	[rowAssets release];
-	[didSelectAssetBlock release];
+	[_assets release];
+	[_didSelectAssetBlock release];
     
 	[super dealloc];
 }

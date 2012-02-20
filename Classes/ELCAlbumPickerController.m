@@ -7,15 +7,21 @@
 
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "ELCAlbumPickerController.h"
-#import "ELCImagePickerController.h"
 #import "ELCAssetTablePicker.h"
+#import "UIImage+ScaleAndRotate.h"
+
+@interface ELCAlbumPickerController ()
+
+- (void)cancel:(id)sender;
+- (void)makeMediaInfoWithAssets:(NSArray *)assets;
+
+@end
 
 @implementation ELCAlbumPickerController
 
-@synthesize parent, assetGroups;
-@synthesize didSelectAssetBlock;
-@synthesize assetTablePicker;
-
+@synthesize multiSelection = _multiSelection;
+@synthesize assetGroups = _assetGroups;
+@synthesize didFinishPickMedia = _didFinishPickMedia;
 
 #pragma mark -
 #pragma mark View lifecycle
@@ -28,44 +34,38 @@ static int compareGroupsUsingSelector(id p1, id p2, void *context)
     return [value2 compare:value1];
 }
 
-- (void)viewDidLoad {
+#pragma mark - View lifecycle
+
+- (void)viewDidLoad
+{
     [super viewDidLoad];
 	
-	[self.navigationItem setTitle:@"Albums"];
+	[self setTitle:@"Albums"];
     
     self.navigationController.navigationBar.barStyle = UIBarStyleBlackTranslucent;
+	[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
     
     if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad)
         self.wantsFullScreenLayout = YES;
-	
-	[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
     
-    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self.parent action:@selector(cancelImagePicker)];
+    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel:)];
 	self.navigationItem.leftBarButtonItem = cancelButton;
 	[cancelButton release];
 
-    NSMutableArray *tempArray = [[NSMutableArray alloc] init];
-	self.assetGroups = tempArray;
-    [tempArray release];
+	_assetGroups = [[NSMutableArray alloc] init];
+	
+	__block NSMutableArray *safeAssetGroups = _assetGroups;
+	__block ELCAlbumPickerController *safeSelf = self;
 
     ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];        
     [library enumerateGroupsWithTypes:ALAssetsGroupAll 
                            usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
-                               if (group == nil) 
-                               {
-                                   return;
-                               }
+                               if (group == nil) return;
                                
-                               [self.assetGroups addObject:group];
-                               [self.assetGroups sortUsingFunction:compareGroupsUsingSelector context:nil];
-                               
-                               // Keep this line!  w/o it the asset count is broken for some reason.  Makes no sense
-                               NSLog(@"count: %d for %@ (%@)", [group numberOfAssets], [group valueForProperty:ALAssetsGroupPropertyName] ,[group valueForProperty:ALAssetsGroupPropertyType]);
-                               
-                               // Reload albums
-                               [self performSelectorOnMainThread:@selector(reloadTableView) 
-                                                      withObject:nil 
-                                                   waitUntilDone:YES];
+                               [safeAssetGroups addObject:group];
+                               [safeAssetGroups sortUsingFunction:compareGroupsUsingSelector context:nil];
+
+                               [safeSelf.tableView performSelectorOnMainThread:@selector(reloadData) withObject:nil waitUntilDone:YES];
                            }
                          failureBlock:^(NSError *error) {
                              
@@ -73,13 +73,18 @@ static int compareGroupsUsingSelector(id p1, id p2, void *context)
                              NSString *errorTitle;
                              
                              // If we encounter a location services error, prompt the user to enable location services
-                             if ([error code] == ALAssetsLibraryAccessUserDeniedError) {
+                             if ([error code] == ALAssetsLibraryAccessUserDeniedError)
+							 {
                                  errorMessage = [NSString stringWithFormat:@"It looks like you've disabled location services for this app. To add photos, enable \"Location Services\" for %@ in your device's \"Settings\" App.",[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"]];
                                  errorTitle = [NSString stringWithString:@"Oops!"];
-                             } else if ([error code] == ALAssetsLibraryAccessGloballyDeniedError) {
+                             }
+							 else if ([error code] == ALAssetsLibraryAccessGloballyDeniedError)
+							 {
                                  errorMessage = [NSString stringWithString:@"It looks like you've disabled location services on your device. To add photos, enable \"Location Services\" in your device's \"Settings\" App."]; 
                                  errorTitle = [NSString stringWithString:@"Oops!"];
-                             } else {
+                             }
+							 else
+							 {
                                  errorMessage = [NSString stringWithFormat:@"Album Error: %@", [error localizedDescription]];
                                  errorTitle = [NSString stringWithString:@"Error"];
                              }
@@ -96,50 +101,90 @@ static int compareGroupsUsingSelector(id p1, id p2, void *context)
                          }];
 }
 
--(void)reloadTableView {
-	
-	[self.tableView reloadData];
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+	return YES;
 }
 
--(void)selectedAssets:(NSArray*)_assets {
-	
-	[(ELCImagePickerController*)parent selectedAssets:_assets];
+#pragma mark - Private Methods
+
+- (void)makeMediaInfoWithAssets:(NSArray *)assets;
+{
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+		NSMutableArray *returnArray = [[NSMutableArray alloc] init];
+		
+		for(ALAsset *asset in assets)
+		{
+			NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+			
+			NSMutableDictionary *workingDictionary = [[NSMutableDictionary alloc] init];
+			[workingDictionary setObject:[asset valueForProperty:ALAssetPropertyType] forKey:@"UIImagePickerControllerMediaType"];
+			
+			CGImageRef fullImageRef = [[asset defaultRepresentation] fullResolutionImage];
+			UIImageOrientation orientation = ((UIImageOrientation)[[asset valueForProperty:@"ALAssetPropertyOrientation"] integerValue]);
+			UIImage *fullResolutionImage = [UIImage imageWithCGImage:fullImageRef scale:1.0 orientation:orientation];
+			
+			UIImage *scaledImage = [fullResolutionImage scaledAndRotatedImageWithMaxResolution:1024];
+			[workingDictionary setObject:scaledImage forKey:@"UIImagePickerControllerOriginalImage"];
+			
+			[workingDictionary setObject:[[asset valueForProperty:ALAssetPropertyURLs] valueForKey:[[[asset valueForProperty:ALAssetPropertyURLs] allKeys] objectAtIndex:0]] forKey:@"UIImagePickerControllerReferenceURL"];
+			
+			[returnArray addObject:workingDictionary];
+			[workingDictionary release];
+			
+			[pool release];
+		}
+		
+		__block NSArray *array = [[NSArray alloc] initWithArray:returnArray];
+		[returnArray release];
+		
+		dispatch_async(dispatch_get_main_queue(), ^{
+			_didFinishPickMedia(array);
+			[array release];
+		});
+	});	
+}
+
+#pragma mark - Action Methods
+
+- (void)cancel:(id)sender
+{
+	[self dismissModalViewControllerAnimated:YES];
 }
 
 #pragma mark -
 #pragma mark Table view data source
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
     // Return the number of sections.
     return 1;
 }
 
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
     // Return the number of rows in the section.
-    return [assetGroups count];
+    return [_assetGroups count];
 }
 
-
 // Customize the appearance of table view cells.
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    
-    static NSString *CellIdentifier = @"Cell";
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	static NSString *CellIdentifier = @"Cell";
     
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    if (cell == nil) {
+    if (cell == nil)
         cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:CellIdentifier] autorelease];
-    }
     
     // Get count
-    ALAssetsGroup *g = (ALAssetsGroup*)[assetGroups objectAtIndex:indexPath.row];
+    ALAssetsGroup *g = (ALAssetsGroup*)[_assetGroups objectAtIndex:indexPath.row];
     [g setAssetsFilter:[ALAssetsFilter allPhotos]];
     NSInteger gCount = [g numberOfAssets];
     
     cell.textLabel.text = [NSString stringWithFormat:@"%@",[g valueForProperty:ALAssetsGroupPropertyName]];
     cell.detailTextLabel.text = [NSString stringWithFormat:@"(%d)",gCount];
     cell.detailTextLabel.textColor = [UIColor grayColor];
-    [cell.imageView setImage:[UIImage imageWithCGImage:[(ALAssetsGroup*)[assetGroups objectAtIndex:indexPath.row] posterImage]]];
+    [cell.imageView setImage:[UIImage imageWithCGImage:[(ALAssetsGroup *)[_assetGroups objectAtIndex:indexPath.row] posterImage]]];
 	[cell setAccessoryType:UITableViewCellAccessoryDisclosureIndicator];
 	
     return cell;
@@ -148,50 +193,40 @@ static int compareGroupsUsingSelector(id p1, id p2, void *context)
 #pragma mark -
 #pragma mark Table view delegate
 
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	ELCAssetTablePicker *assetTablePicker = [[ELCAssetTablePicker alloc] init];
+	assetTablePicker.multiSelection = _multiSelection;
 	
-    ELCAssetTablePicker *tempAssetTablePicker = [[ELCAssetTablePicker alloc] initWithNibName:@"ELCAssetTablePicker" bundle:[NSBundle mainBundle]];
-    
-	self.assetTablePicker = tempAssetTablePicker;
-    [tempAssetTablePicker release];
-	
-	[assetTablePicker setDidSelectAssetBlock:didSelectAssetBlock];
-    
-	assetTablePicker.parent = self;
+	__block ELCAlbumPickerController *safeSelf = self;
+		
+	[assetTablePicker setDidFinishSelectingAssets:^(NSArray *assets) {
+		if (safeSelf.didFinishPickMedia)
+			[safeSelf makeMediaInfoWithAssets:assets];
+	}];
 
-    // Move me    
-    assetTablePicker.assetGroup = [assetGroups objectAtIndex:indexPath.row];
-    [assetTablePicker.assetGroup setAssetsFilter:[ALAssetsFilter allPhotos]];
+    // Move me
+    assetTablePicker.assetsGroup = [_assetGroups objectAtIndex:indexPath.row];
+    [assetTablePicker.assetsGroup setAssetsFilter:[ALAssetsFilter allPhotos]];
     
 	[self.navigationController pushViewController:assetTablePicker animated:YES];
-//	[picker release];
+	
+	[assetTablePicker release];
 }
 
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-	
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
 	return 57;
 }
 
-#pragma mark -
-#pragma mark Memory management
+#pragma mark - Memory management
 
 - (void)dealloc 
 {
-//	[assetGroups release];
-    
-	[didSelectAssetBlock release];
-    self.assetTablePicker.assetGroup = nil;
-    [assetTablePicker release];
-    
-    self.assetGroups = nil;
+	[_assetGroups release];
+	[_didFinishPickMedia release];
     
     [super dealloc];
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
-{
-	return YES;
-}
-
 @end
-

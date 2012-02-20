@@ -7,29 +7,12 @@
 
 #import <UIKit/UIKit.h>
 
-#import "ELCAsset.h"
+typedef void (^ELCAlbumPickerControllerDidFinishPickingMediaWithInfoBlock)(NSArray *info);
 
-@class ELCAssetTablePicker;
+@interface ELCAlbumPickerController : UITableViewController
 
-
-@interface ELCAlbumPickerController : UITableViewController {
-	
-	NSMutableArray *assetGroups;
-	NSOperationQueue *queue;
-    
-    ELCAssetTablePicker *assetTablePicker;
-	
-	ELCAssetDidSelectAssetBlock didSelectAssetBlock;
-    
-	id parent;
-}
-
-@property (nonatomic, assign) id parent;
+@property (nonatomic, assign, getter = isMultiSelection) BOOL multiSelection;
 @property (nonatomic, retain) NSMutableArray *assetGroups;
-@property (nonatomic, copy) ELCAssetDidSelectAssetBlock didSelectAssetBlock;
-@property (nonatomic, retain) ELCAssetTablePicker *assetTablePicker;
-
--(void)selectedAssets:(NSArray*)_assets;
+@property (nonatomic, copy) ELCAlbumPickerControllerDidFinishPickingMediaWithInfoBlock didFinishPickMedia;
 
 @end
-
