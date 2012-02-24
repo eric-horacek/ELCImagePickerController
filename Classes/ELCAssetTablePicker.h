@@ -6,29 +6,14 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "ELCAsset.h"
 #import <AssetsLibrary/AssetsLibrary.h>
 
-@interface ELCAssetTablePicker : UITableViewController <ELCAssetProtocol>
-{
-	ALAssetsGroup *assetGroup;
-	
-	NSMutableArray *elcAssets;
-	int selectedAssets;
-	
-	id parent;
-	
-	NSOperationQueue *queue;
-}
+typedef void (^ELCAssetTablePickerDidFinishSelectingAssetsBlock)(NSArray *assets);
 
-@property (nonatomic, assign) id parent;
-@property (nonatomic, assign) ALAssetsGroup *assetGroup;
-@property (nonatomic, retain) NSMutableArray *elcAssets;
-@property (nonatomic, retain) IBOutlet UILabel *selectedAssetsLabel;
+@interface ELCAssetTablePicker : UITableViewController
 
--(int)totalSelectedAssets;
--(void)preparePhotos;
-
--(void)doneAction:(id)sender;
+@property (nonatomic, assign, getter = isMultiSelection) BOOL multiSelection;
+@property (nonatomic, retain) ALAssetsGroup *assetsGroup;
+@property (nonatomic, copy) ELCAssetTablePickerDidFinishSelectingAssetsBlock didFinishSelectingAssets; 
 
 @end

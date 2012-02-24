@@ -7,16 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "ELCImagePickerController.h"
 
-@interface ELCImagePickerDemoViewController : UIViewController <ELCImagePickerControllerDelegate, UINavigationControllerDelegate, UIScrollViewDelegate> {
-
-	IBOutlet UIScrollView *scrollview;
-}
-
-@property (nonatomic, retain) IBOutlet UIScrollView *scrollview;
-
--(IBAction)launchController;
+@interface ELCImagePickerDemoViewController : UIViewController
 
 @end
-

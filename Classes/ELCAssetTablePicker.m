@@ -14,347 +14,301 @@
 
 @interface ELCAssetTablePicker()
 
-- (void)scrollTableViewToBottom;
+@property (nonatomic, retain) NSArray *assets;
+@property (nonatomic, copy) ELCAssetDidSelectAssetBlock didSelectAssetBlock;
 
+- (void)scrollTableViewToBottom;
 - (NSInteger)assetsPerRow;
+- (int)totalSelectedAssets;
+- (void)doneAction:(id)sender;
 
 @end
 
 @implementation ELCAssetTablePicker
 
-@synthesize parent;
-@synthesize selectedAssetsLabel;
-@synthesize assetGroup, elcAssets;
+@synthesize multiSelection = _multiSelection;
+@synthesize assetsGroup = _assetsGroup;
+@synthesize assets = _assets;
+@synthesize didFinishSelectingAssets = _didFinishSelectingAssets;
+@synthesize didSelectAssetBlock = _didSelectAssetBlock;
 
--(void)viewDidLoad {
-        
+- (void)viewDidLoad
+{
+	[super viewDidLoad];
+	
 	[self.tableView setSeparatorColor:[UIColor clearColor]];
 	[self.tableView setAllowsSelection:NO];
-
-    NSMutableArray *tempArray = [[NSMutableArray alloc] init];
-    self.elcAssets = tempArray;
-    [tempArray release];
 	
-	UIBarButtonItem *doneButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(doneAction:)];
-	[self.navigationItem setRightBarButtonItem:doneButtonItem];
-    [doneButtonItem release];
+	if (_multiSelection)
+	{
+		UIBarButtonItem *doneButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(doneAction:)];
+		[self.navigationItem setRightBarButtonItem:doneButtonItem];
+		[doneButtonItem release];
+	}
     
-	[self.navigationItem setTitle:@"Loading..."];
+	[self setTitle:NSLocalizedString(@"LoadingKey", NULL)];
     
     self.navigationController.navigationBar.barStyle = UIBarStyleBlackTranslucent;
+	[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
 
-    if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad) {
+    if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad)
         self.wantsFullScreenLayout = YES;
-    } else {
-        [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
-    }
+	
+	int count = [self.assetsGroup numberOfAssets];
+	NSMutableArray *assets = [[NSMutableArray alloc] initWithCapacity:count];
+	ELCAsset *asset;
+	for (int i = 0; i < count; i++)
+	{
+		asset = [[ELCAsset alloc] init];
+		
+		[assets addObject:asset];
+		[asset release];
+	}
+	
+	_assets = [[NSArray alloc] initWithArray:assets];
+	[assets release];
     
-    [self.tableView reloadData];
-    
-	[self performSelectorInBackground:@selector(preparePhotos) withObject:nil];
+	__block ELCAssetTablePicker *ss = self;
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+		[ss.assetsGroup enumerateAssetsUsingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
+			if (result != nil)
+			{
+				__block ELCAsset *asset = [ss.assets objectAtIndex:ss.assets.count - index - 1];
+				
+				[asset setAsset:result];
+			}
+		}];
+		
+		dispatch_async(dispatch_get_main_queue(), ^{
+			ss.title = NSLocalizedString(@"SelectPhotosKey", NULL);
+			[self scrollTableViewToBottom];
+		});
+		
+		for (ELCAsset *asset in ss.assets)
+			dispatch_async(dispatch_get_main_queue(), ^{
+				[asset.imageView setImage:[UIImage imageWithCGImage:[asset.asset thumbnail]]];
+			});	
+	});
+	
+	self.didSelectAssetBlock = ^(ALAsset *asset) {
+		int totalSelectedAssets = [ss totalSelectedAssets];
+		
+		if (totalSelectedAssets == 0)
+			ss.title = NSLocalizedString(@"SelectPhotosKey", NULL);
+		else if (totalSelectedAssets == 1)
+			ss.title = NSLocalizedString(@"Photo1", NULL);
+		else
+			ss.title = [NSString localizedStringWithFormat:NSLocalizedString(@"PhotosCountKey", NULL), totalSelectedAssets];
+		
+		if (totalSelectedAssets > 20) 
+		{	
+			ss.navigationItem.rightBarButtonItem.enabled = NO;
+			
+			if (SYSTEM_VERSION_LESS_THAN(@"5.0")) 
+			{	
+				if (ss.navigationItem.titleView == nil) 
+				{	
+					UILabel *titleLabel = [[UILabel alloc] init];
+					
+					CGRect frame = CGRectMake(0, 0, [ss.navigationItem.title sizeWithFont:[UIFont boldSystemFontOfSize:20.0]].width, 20.0);
+					titleLabel.frame = frame;
+					
+					titleLabel.font = [UIFont boldSystemFontOfSize: 20.0f];
+					titleLabel.textAlignment = ([ss.title length] < 10 ? UITextAlignmentCenter : UITextAlignmentLeft);
+					
+					titleLabel.textColor = [UIColor colorWithWhite:1.0 alpha:0.7];
+					titleLabel.backgroundColor = [UIColor clearColor];
+					
+					titleLabel.shadowColor = [UIColor colorWithWhite:0.0 alpha:0.35];
+					titleLabel.shadowOffset = CGSizeMake(0.0, -1.0);
+					
+					titleLabel.text = ss.navigationItem.title;
+					
+					[ss.navigationItem setTitleView:titleLabel];
+					[titleLabel release];
+					
+					ss.navigationItem.rightBarButtonItem.enabled = NO;
+				}				
+			} 
+			else
+			{
+				UIColor *textColor = [UIColor colorWithWhite:1.0 alpha:0.7];
+				UIColor *shadowColor = [UIColor colorWithWhite:0.0 alpha:0.35];
+				
+				NSDictionary *titleTextAttributes = [NSDictionary dictionaryWithObjectsAndKeys:textColor, UITextAttributeTextColor, shadowColor, UITextAttributeTextShadowColor, nil];
+				
+				[ss.navigationController.navigationBar setTitleTextAttributes:titleTextAttributes];
+			}
+		} 
+		else 
+		{	
+			ss.navigationItem.rightBarButtonItem.enabled = YES;
+            
+			if (SYSTEM_VERSION_LESS_THAN(@"5.0")) 
+			{
+				if (ss.navigationItem.titleView) 
+					[ss.navigationItem setTitleView:nil];
+			} 
+			else 
+			{
+				UIColor *textColor = [UIColor colorWithWhite:1.0 alpha:1.0];
+				UIColor *shadowColor = [UIColor colorWithWhite:0.0 alpha:1.0];
+				
+				NSDictionary *titleTextAttributes = [NSDictionary dictionaryWithObjectsAndKeys:textColor, UITextAttributeTextColor, shadowColor, UITextAttributeTextShadowColor, nil];
+				
+				[ss.navigationController.navigationBar setTitleTextAttributes:titleTextAttributes];
+			}
+		}
+		
+		if (!ss.multiSelection)
+			if (ss.didFinishSelectingAssets != NULL)
+				ss.didFinishSelectingAssets([NSArray arrayWithObject:asset]);
+	};
 }
 
--(void)viewWillDisappear:(BOOL)animated {
-    self.assetGroup = nil;
-    self.parent = nil;
-    
-    [super viewWillDisappear:animated];
-}
-
--(void)preparePhotos {
-    
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    
-    // Isn't happy on iOS 4, so just hardcoding it
-    // NSUInteger numberToLoad = [self.tableView indexPathsForVisibleRows].count * 4;
-    
-    NSUInteger numberToLoad;
-    
-    if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad) {
-        numberToLoad = 10 * [self assetsPerRow];   
-    } else {
-        numberToLoad = 6 * [self assetsPerRow];   
-    }
-    
-    [self.assetGroup enumerateAssetsWithOptions:NSEnumerationReverse usingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) 
-     {         
-         if(result == nil) {
-             return;
-         }
-         
-         ELCAsset *elcAsset = [[ELCAsset alloc] initWithAsset:result];
-         [elcAsset setDelegate:self];
-         [self.elcAssets addObject:elcAsset];
-         
-         //Once we've loaded the numberToLoad then we should reload the table data because the screen is full
-         if (self.elcAssets.count <= numberToLoad) {
-             
-             [self.tableView performSelectorOnMainThread:@selector(reloadData) withObject:nil waitUntilDone:NO];
-             
-             if (self.elcAssets.count == numberToLoad-[self assetsPerRow]) {
-                 [self.navigationItem performSelectorOnMainThread:@selector(setTitle:) withObject:@"Select Photos" waitUntilDone:YES];   
-             }
-             
-             if (self.elcAssets.count == 1) {
-                 [self performSelectorOnMainThread:@selector(scrollTableViewToBottom) withObject:nil waitUntilDone:YES];
-             }
-         }
-         
-         [elcAsset release];
-     }];
-
-    self.navigationItem.title = @"Select Photos";
-    [pool release];
-}
-
-- (void)assetSelected:(ELCAsset*)asset
-{
-    NSLog(@"total selected assets: %i", [self totalSelectedAssets]);
-    
-    int totalSelectedAssets = [self totalSelectedAssets];
-    
-    if (totalSelectedAssets == 0) {
-        self.navigationItem.title = @"Select Photos";
-    } else if (totalSelectedAssets == 1) {
-        self.navigationItem.title = @"1 Photo";
-    } else {
-        self.navigationItem.title = [NSString stringWithFormat:@"%i Photos", totalSelectedAssets];
-    }
-    
-    if (totalSelectedAssets > 20) {
-         
-        self.navigationItem.rightBarButtonItem.enabled = NO;
-        
-        if (SYSTEM_VERSION_LESS_THAN(@"5.0")) {
-        
-            if (self.navigationItem.titleView == nil) {
-                
-                UILabel *titleLabel = [[UILabel alloc] init];
-                
-                CGRect frame = CGRectMake(0, 0, [self.navigationItem.title sizeWithFont:[UIFont boldSystemFontOfSize:20.0]].width, 20.0);
-                titleLabel.frame = frame;
-                
-                titleLabel.font = [UIFont boldSystemFontOfSize: 20.0f];
-                titleLabel.textAlignment = ([self.title length] < 10 ? UITextAlignmentCenter : UITextAlignmentLeft);
-                
-                titleLabel.textColor = [UIColor colorWithWhite:1.0 alpha:0.7];
-                titleLabel.backgroundColor = [UIColor clearColor];
-                
-                titleLabel.shadowColor = [UIColor colorWithWhite:0.0 alpha:0.35];
-                titleLabel.shadowOffset = CGSizeMake(0.0, -1.0);
-                
-                titleLabel.text = self.navigationItem.title;
-                
-                [self.navigationItem setTitleView:titleLabel];
-                [titleLabel release];
-                
-                self.navigationItem.rightBarButtonItem.enabled = NO;
-            }
-            
-        } else {
-            
-            UIColor *textColor = [UIColor colorWithWhite:1.0 alpha:0.7];
-            UIColor *shadowColor = [UIColor colorWithWhite:0.0 alpha:0.35];
-            
-            NSDictionary *titleTextAttributes = [NSDictionary dictionaryWithObjectsAndKeys:textColor, UITextAttributeTextColor, shadowColor, UITextAttributeTextShadowColor, nil];
-            
-            [self.navigationController.navigationBar setTitleTextAttributes:titleTextAttributes];
-        }
-        
-    } else {
-        
-        self.navigationItem.rightBarButtonItem.enabled = YES;
-            
-        if (SYSTEM_VERSION_LESS_THAN(@"5.0")) {
-            
-            if (self.navigationItem.titleView) {
-                [self.navigationItem setTitleView:nil];
-            }
-            
-        } else {
-            
-            UIColor *textColor = [UIColor colorWithWhite:1.0 alpha:1.0];
-            UIColor *shadowColor = [UIColor colorWithWhite:0.0 alpha:1.0];
-            
-            NSDictionary *titleTextAttributes = [NSDictionary dictionaryWithObjectsAndKeys:textColor, UITextAttributeTextColor, shadowColor, UITextAttributeTextShadowColor, nil];
-            
-            [self.navigationController.navigationBar setTitleTextAttributes:titleTextAttributes];
-        }
-    }
-}
-
-- (void)scrollTableViewToBottom {
-    
+- (void)scrollTableViewToBottom
+{    
     int lastRowIndex = [self tableView:nil numberOfRowsInSection:0] - 1;
-    if (lastRowIndex >= 0) {
-        
-        NSIndexPath* lastRowIndexPath = [NSIndexPath indexPathForRow:lastRowIndex inSection:0];
+    if (lastRowIndex >= 0) 
+	{
+        NSIndexPath *lastRowIndexPath = [NSIndexPath indexPathForRow:lastRowIndex inSection:0];
         [self.tableView scrollToRowAtIndexPath:lastRowIndexPath atScrollPosition:UITableViewScrollPositionBottom animated:NO];   
     }
 }
 
--(void)scrollToBottom {
-
-    int lastRowNumber = [self tableView:nil numberOfRowsInSection:0] - 1;
-    if (lastRowNumber >= 0) {
-        NSIndexPath* ip = [NSIndexPath indexPathForRow:lastRowNumber inSection:0];
-        [self.tableView scrollToRowAtIndexPath:ip atScrollPosition:UITableViewScrollPositionTop animated:NO];   
-    }
-}
-
-- (void)doneAction:(id)sender {
-	
+- (void)doneAction:(id)sender
+{
 	NSMutableArray *selectedAssetsImages = [[NSMutableArray alloc] init];
 	    
-	for(ELCAsset *elcAsset in self.elcAssets) 
-    {		
-		if([elcAsset selected]) {
-			
-			[selectedAssetsImages addObject:[elcAsset asset]];
-		}
-	}
-        
-    [(ELCAlbumPickerController*)self.parent selectedAssets:selectedAssetsImages];
+	for(ELCAsset *asset in _assets) 
+		if([asset isSelected])
+			[selectedAssetsImages addObject:[asset asset]];
+	
+	if (_didFinishSelectingAssets != NULL)
+		_didFinishSelectingAssets([NSArray arrayWithArray:selectedAssetsImages]);
+	
     [selectedAssetsImages release];
 }
 
 - (NSInteger)assetsPerRow
 {
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-        return 6;
-    } else {
-        return 4;
-    }
+	return (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) ? 6 : 4;
 }
 
 #pragma mark UITableViewDataSource Delegate Methods
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    
-    return 1;
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+	return 1;
 }
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    
-    // Add two rows for padding at the top and bottom of each section
-    return ceil([self.assetGroup numberOfAssets] / [self assetsPerRow]) + 2;
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+	return ceil((float) [self.assetsGroup numberOfAssets] / (float) [self assetsPerRow]) + 2;
 }
 
-// ugly
--(NSArray*)assetsForIndexPath:(NSIndexPath*)_indexPath {
-    
-    int index = (self.assetGroup.numberOfAssets-1)-(_indexPath.row*[self assetsPerRow]);
+- (NSArray*)assetsForIndexPath:(NSIndexPath*)indexPath
+{
+	int index = (self.assetsGroup.numberOfAssets - 1) - (indexPath.row * [self assetsPerRow]);
     
     int minIndex;
-    if (index < ([self assetsPerRow]-1)) {
+	
+    if (index < ([self assetsPerRow]-1))
         minIndex = 0;
-    } else {
+    else
         minIndex = index-([self assetsPerRow]-1);
-    }
     
-    NSMutableArray *assetArray = [NSMutableArray array];
-    // If there's four images in the row
-    
-    if (index < self.elcAssets.count) {
-        for (NSInteger i=(index - minIndex); i > -1; i--) {
-            
-//            NSLog(@"building asset at index %d", minIndex+i);
-            
-            [assetArray addObject:[self.elcAssets objectAtIndex:minIndex+i]];
-        }
+    if (index < _assets.count)
+	{
+		NSMutableArray *assetArray = [NSMutableArray array];
+		
+        for (NSInteger i = (index - minIndex); i > -1; i--)
+            [assetArray addObject:[_assets objectAtIndex:minIndex + i]];
+		
 		return assetArray;
     }
     
 	return nil;
 }
 
-// Customize the appearance of table view cells.
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath 
+{
     if ([indexPath row] == 0)
     {
         static NSString *whitespaceCellIdentifier = @"WhitespaceTableViewCell";
         UITableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:whitespaceCellIdentifier];
-        if (cell == nil) {
+        if (cell == nil)
             cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:whitespaceCellIdentifier] autorelease];
-        }
         return cell;
-        
-    } else if ([indexPath row] == [self tableView:tableView numberOfRowsInSection:[indexPath section]]-1) {
-        
+    }
+	
+	if ([indexPath row] == [self tableView:tableView numberOfRowsInSection:[indexPath section]]-1)
+	{
         static NSString *whitespaceCellIdentifier = @"ELCCountTableViewCell";
         UITableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:whitespaceCellIdentifier];
-        if (cell == nil) {
+        if (cell == nil)
+		{
             cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:whitespaceCellIdentifier] autorelease];
             cell.textLabel.textAlignment = UITextAlignmentCenter;
             cell.textLabel.textColor = [UIColor grayColor];
             cell.textLabel.font = [UIFont systemFontOfSize:19];
         }
         
-        cell.textLabel.text = [NSString stringWithFormat:@"%i Photos", self.assetGroup.numberOfAssets];
-        
-        return cell;
-        
-    } else {
-    
-        static NSString *CellIdentifier = @"Cell";
-            
-        ELCAssetCell *cell = (ELCAssetCell*)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-
-        NSIndexPath *updatedIndexPath = [NSIndexPath indexPathForRow:indexPath.row-1 inSection:indexPath.section];
-        
-        if (cell == nil) 
-        {		        
-            cell = [[[ELCAssetCell alloc] initWithAssets:[self assetsForIndexPath:updatedIndexPath] reuseIdentifier:CellIdentifier] autorelease];
-        }	
-        else 
-        {		
-            [cell setAssets:[self assetsForIndexPath:updatedIndexPath]];
-        }
+        cell.textLabel.text = [NSString localizedStringWithFormat:NSLocalizedString(@"PhotosCountKey", NULL), self.assetsGroup.numberOfAssets];
         
         return cell;
     }
+
+	static NSString *CellIdentifier = @"Cell";
+		
+	ELCAssetCell *cell = (ELCAssetCell*)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+
+	NSIndexPath *updatedIndexPath = [NSIndexPath indexPathForRow:indexPath.row-1 inSection:indexPath.section];
+	
+	if (cell == nil) 
+		cell = [[[ELCAssetCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier] autorelease];
+	
+	[cell setAssets:[self assetsForIndexPath:updatedIndexPath]];
+	[cell setDidSelectAssetBlock:_didSelectAssetBlock];
+	
+	return cell;
 }
 
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    
-    if (([indexPath row] == 0)) {
-        
-        return [ELCAssetCell cellPadding]/2;
-        
-    } else if (indexPath.row == [self tableView:tableView numberOfRowsInSection:indexPath.section]-1) {
-        
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (([indexPath row] == 0))
+        return [ELCAssetCell cellPadding] / 2;
+	
+	if (indexPath.row == [self tableView:tableView numberOfRowsInSection:indexPath.section] - 1)
         return 50;
-        
-    } else {
-        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-            return 89;
-        } else {
-            return 79;            
-        }
-    }
+
+	return (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) ? 89.0 : 79.0;
 }
 
-- (int)totalSelectedAssets {
-    
+- (int)totalSelectedAssets
+{
     int count = 0;
     
-    for(ELCAsset *asset in self.elcAssets) 
-    {
-		if([asset selected]) 
-        {            
+    for(ELCAsset *asset in _assets) 
+		if([asset isSelected]) 
             count++;	
-		}
-	}
     
     return count;
 }
 
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+	return YES;
+}
+
 - (void)dealloc 
 {
-    [elcAssets release];
-    [selectedAssetsLabel release];
-    [super dealloc];    
+    [_assets release];
+	[_assetsGroup release];
+	[_didSelectAssetBlock release];
+	[_didFinishSelectingAssets release];
+	
+    [super dealloc];
 }
 
 @end

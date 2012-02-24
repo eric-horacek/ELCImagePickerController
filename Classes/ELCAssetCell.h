@@ -6,18 +6,13 @@
 //
 
 #import <UIKit/UIKit.h>
-
+#import "ELCAsset.h"
 
 @interface ELCAssetCell : UITableViewCell
-{
-	NSArray *rowAssets;
-}
 
--(id)initWithAssets:(NSArray*)_assets reuseIdentifier:(NSString*)_identifier;
--(void)setAssets:(NSArray*)_assets;
+@property (nonatomic, copy) ELCAssetDidSelectAssetBlock didSelectAssetBlock;
+@property (nonatomic, retain) NSArray *assets;
 
 + (CGFloat)cellPadding;
-
-@property (nonatomic,retain) NSArray *rowAssets;
 
 @end

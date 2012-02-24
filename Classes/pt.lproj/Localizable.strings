@@ -1,0 +1,20 @@
+/* 
+  Localizable.strings
+  ELCImagePickerDemo
+
+  Created by Guilherme Vieira on 20/02/12.
+  Copyright (c) 2012 ELC Technologies. All rights reserved.
+*/
+
+"AlbumsKey" = "Álbums";
+"TitleKey" = "Oops!";
+"UserDeniedKey" = "Você desabilitou o Serviço de Localizção para este app. Para visualizar as fotos, habilite \"Serv. Localização\" para %@ no app \"Ajustes\"";
+"GloballyDeniedKey" = "Você desabilitou o Serviço de Localizção no seu dispositivo. Para visualizar as fotos, habilite \"Serv. Localização\" no app \"Ajustes\"";
+"AlbumErrorKey" = "Erro de álbum: %@";
+"ErrorKey" = "Erro";
+"OkKey" = "Ok";
+
+"LoadingKey" = "Carregando...";
+"SelectPhotosKey" = "Selecione as fotos";
+"PhotosCountKey" = "%i Fotos";
+"Photo1" = "1 Foto";

@@ -1,0 +1,20 @@
+/* 
+  Localizable.strings
+  ELCImagePickerDemo
+
+  Created by Guilherme Vieira on 20/02/12.
+  Copyright (c) 2012 ELC Technologies. All rights reserved.
+*/
+
+"AlbumsKey" = "Albums";
+"TitleKey" = "Oops!";
+"UserDeniedKey" = "It looks like you've disabled location services for this app. To add photos, enable \"Location Services\" for %@ in your device's \"Settings\" App.";
+"GloballyDeniedKey" = "It looks like you've disabled location services on your device. To add photos, enable \"Location Services\" in your device's \"Settings\" App.";
+"AlbumErrorKey" = "Album Error: %@";
+"ErrorKey" = "Error";
+"OkKey" = "Ok";
+
+"LoadingKey" = "Loading...";
+"SelectPhotosKey" = "Select Photos";
+"PhotosCountKey" = "%i Photos";
+"Photo1" = "1 Photo";
